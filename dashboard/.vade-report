@@ -1,0 +1,60 @@
+# Vercel Speed Insights Installation Report
+
+## Summary
+Successfully installed and configured Vercel Speed Insights for the CortexAI Plus ESP dashboard project.
+
+## Changes Made
+
+### 1. Package Installation
+- **Added:** `@vercel/speed-insights@^2.0.0` to dependencies
+- **Updated:** `package.json` with the new dependency
+- **Updated:** `package-lock.json` with dependency tree
+
+### 2. Code Implementation
+- **Modified:** `app/layout.tsx`
+  - Added import: `import { SpeedInsights } from '@vercel/speed-insights/next';`
+  - Added component: `<SpeedInsights />` at the end of the `<body>` tag
+
+## Implementation Details
+
+### Framework Detection
+- Project uses **Next.js 16.2.2** (App Router)
+- Package manager: **npm** (detected via package-lock.json)
+
+### Installation Approach
+Following the official Vercel documentation (https://vercel.com/docs/speed-insights/quickstart):
+- Used the Next.js-specific package: `@vercel/speed-insights/next`
+- Placed the `<SpeedInsights />` component in the root layout file
+- Component positioned at the end of the `<body>` tag, after all other content and providers
+
+### Why This Implementation
+1. **Root Layout Placement:** Ensures Speed Insights tracks all pages in the application
+2. **End of Body:** Follows best practices to avoid blocking critical page rendering
+3. **Next.js Import:** Uses the optimized Next.js-specific export for better integration
+
+## Verification Steps Completed
+
+✅ **Build Test:** `npm run build` completed successfully with no errors
+✅ **Linting:** No new linting issues introduced in modified files
+✅ **Type Safety:** TypeScript compilation passed without errors
+✅ **Dependencies:** Lock file updated correctly
+
+## Next Steps for User
+
+To enable Speed Insights on Vercel:
+1. Deploy the application to Vercel
+2. Navigate to your project dashboard on Vercel
+3. Go to the "Speed Insights" tab
+4. Click the "Enable" button to activate Speed Insights
+5. After deployment and user visits, metrics will be available in the dashboard
+
+## Files Modified
+- `app/layout.tsx` - Added SpeedInsights component
+- `package.json` - Added dependency
+- `package-lock.json` - Updated dependency tree (auto-generated)
+
+## Notes
+- The implementation preserves all existing functionality
+- No breaking changes introduced
+- The component is lightweight and won't impact page performance
+- Speed Insights will automatically track Core Web Vitals and page performance metrics
