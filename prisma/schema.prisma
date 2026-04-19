@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  login     String   @unique
+  senhaHash String   @map("senha_hash")
+  pin       String?
+  role      String   @default("operador")
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  vendas Venda[]
+
+  @@map("usuarios")
+}
+
+model Categoria {
+  id                  Int      @id @default(autoincrement())
+  nome                String   @unique
+  descricao           String?
+  tipoProduto         String?  @map("tipo_produto")
+  classificacaoBebida String?  @map("classificacao_bebida")
+  icone               String?
+  cor                 String?
+  margemLucroPadrao   Decimal? @map("margem_lucro_padrao")
+  metaVendasMensais   Decimal? @map("meta_vendas_mensais")
+  comissaoPorVenda    Decimal? @map("comissao_por_venda")
+  ordemExibicao       Int?     @map("ordem_exibicao")
+  status              String   @default("ativa")
+  tags                String?
+  criadoEm            DateTime @default(now()) @map("criado_em")
+
+  @@map("categorias")
+}
+
+model Produto {
+  id           Int       @id @default(autoincrement())
+  nome         String    @unique
+  estoque      Int       @default(0)
+  preco        Decimal
+  categoria    String
+  sku          String?
+  codigoBarras String?   @map("codigo_barras")
+  precoCusto   Decimal?  @map("preco_custo")
+  estoqueMinimo Int?     @map("estoque_minimo")
+  fornecedor   String?
+  validade     DateTime?
+  lote         String?
+  localizacao  String?
+  status       String    @default("ativo")
+  descricao    String?
+  tags         String?
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
+
+  @@map("produtos")
+}
+
+model Venda {
+  id                Int       @id @default(autoincrement())
+  produto           String
+  quantidade        Int
+  preco             Decimal
+  total             Decimal
+  origem            String    @default("manual")
+  data              DateTime  @default(now())
+  audioLogId        Int?      @map("audio_log_id")
+  audioLog          AudioLog? @relation(fields: [audioLogId], references: [id])
+  usuarioId         Int?      @map("usuario_id")
+  usuario           Usuario?  @relation(fields: [usuarioId], references: [id])
+  clienteId         Int?      @map("cliente_id")
+  cliente           Cliente?  @relation(fields: [clienteId], references: [id])
+  desconto          Float     @default(0)
+  metodoPagamento   String?   @map("metodo_pagamento")
+  troco             Float?
+  cupomUsado        String?   @map("cupom_usado")
+
+  @@map("vendas")
+}
+
+model AudioLog {
+  id            Int      @id @default(autoincrement())
+  textoOriginal String   @map("texto_original")
+  resultado     Json?
+  confianca     Decimal?
+  sucesso       Boolean  @default(false)
+  criadoEm      DateTime @default(now()) @map("criado_em")
+  vendas        Venda[]
+
+  @@map("audio_logs")
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  cpf       String?  @unique
+  email     String?  @unique
+  telefone  String?
+  endereco  String?
+  obs       String?
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  vendas Venda[]
+
+  @@map("clientes")
+}
+
+model Cupom {
+  id          Int       @id @default(autoincrement())
+  codigo      String    @unique
+  tipo        String
+  valor       Decimal
+  valorMinimo Decimal?  @map("valor_minimo")
+  validoAte   DateTime  @map("valido_ate")
+  usosMax     Int       @default(1)
+  usos        Int       @default(0)
+  ativo       Boolean   @default(true)
+  criadoEm    DateTime  @default(now()) @map("criado_em")
+
+  @@map("cupons")
+}
+
+model Notificacao {
+  id        Int      @id @default(autoincrement())
+  tipo      String
+  titulo    String
+  mensagem  String
+  lida      Boolean  @default(false)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  @@map("notificacoes")
+}

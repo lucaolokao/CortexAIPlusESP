@@ -1,0 +1,211 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api
+
+# ════════════════════════════════════════
+# IA — PROCESSAR TEXTO
+# ════════════════════════════════════════
+
+### Processar texto simples
+POST {{baseUrl}}/processar-texto
+Content-Type: application/json
+
+{
+  "texto": "2 coca cola, 1 agua mineral"
+}
+
+###
+
+### Processar texto com números por extenso
+POST {{baseUrl}}/processar-texto
+Content-Type: application/json
+
+{
+  "texto": "dois brigadeiros, três batatas lays"
+}
+
+###
+
+### Processar texto com variações de escrita (fuzzy)
+POST {{baseUrl}}/processar-texto
+Content-Type: application/json
+
+{
+  "texto": "1 coca, 2 agua, 1 brigadero"
+}
+
+###
+
+### Processar texto complexo
+POST {{baseUrl}}/processar-texto
+Content-Type: application/json
+
+{
+  "texto": "3 refrigerante guarana e 2 pao de queijo, 1 campari"
+}
+
+###
+
+### Endpoint de áudio (stub)
+POST {{baseUrl}}/audio
+Content-Type: application/json
+
+{
+  "audio": "base64_audio_data_aqui"
+}
+
+# ════════════════════════════════════════
+# VENDAS
+# ════════════════════════════════════════
+
+### Registrar venda manual
+POST {{baseUrl}}/venda
+Content-Type: application/json
+
+{
+  "produto": "Brigadeiro",
+  "quantidade": 3,
+  "preco": 7.99,
+  "origem": "manual"
+}
+
+###
+
+### Registrar venda via IA (com audioLogId)
+POST {{baseUrl}}/venda
+Content-Type: application/json
+
+{
+  "produto": "Coca-Cola",
+  "quantidade": 2,
+  "preco": 5.99,
+  "origem": "ia",
+  "audioLogId": 1
+}
+
+###
+
+### Registrar venda via ESP32
+POST {{baseUrl}}/venda
+Content-Type: application/json
+
+{
+  "produto": "Batata Lays",
+  "quantidade": 1,
+  "preco": 11.40,
+  "origem": "esp32"
+}
+
+###
+
+### Listar histórico de vendas
+GET {{baseUrl}}/historico
+
+###
+
+### Listar vendas (alias)
+GET {{baseUrl}}/vendas
+
+###
+
+### Faturamento do dia
+GET {{baseUrl}}/faturamento-dia
+
+# ════════════════════════════════════════
+# PRODUTOS
+# ════════════════════════════════════════
+
+### Listar todos os produtos
+GET {{baseUrl}}/produtos
+
+###
+
+### Criar produto
+POST {{baseUrl}}/produto
+Content-Type: application/json
+
+{
+  "nome": "Suco de Uva",
+  "estoque": 25,
+  "preco": 6.50,
+  "categoria": "bebidas"
+}
+
+###
+
+### Atualizar produto (estoque e preço)
+PUT {{baseUrl}}/produto
+Content-Type: application/json
+
+{
+  "nome": "Brigadeiro",
+  "estoque": 20,
+  "preco": 8.50
+}
+
+###
+
+### Deletar produto
+DELETE {{baseUrl}}/produto
+Content-Type: application/json
+
+{
+  "nome": "Suco de Uva"
+}
+
+# ════════════════════════════════════════
+# CATEGORIAS
+# ════════════════════════════════════════
+
+### Listar categorias
+GET {{baseUrl}}/categorias
+
+###
+
+### Criar categoria
+POST {{baseUrl}}/categoria
+Content-Type: application/json
+
+{
+  "nome": "Sobremesas"
+}
+
+###
+
+### Deletar categoria
+DELETE {{baseUrl}}/categoria
+Content-Type: application/json
+
+{
+  "nome": "Sobremesas"
+}
+
+# ════════════════════════════════════════
+# ESTATÍSTICAS
+# ════════════════════════════════════════
+
+### Stats gerais
+GET {{baseUrl}}/stats
+
+###
+
+### Vendas últimos 7 dias
+GET {{baseUrl}}/vendas-7dias
+
+# ════════════════════════════════════════
+# LOGS DA IA
+# ════════════════════════════════════════
+
+### Listar logs de processamento da IA
+GET {{baseUrl}}/audio-logs
+
+# ════════════════════════════════════════
+# ESP32
+# ════════════════════════════════════════
+
+### Heartbeat do ESP32
+POST {{baseUrl}}/heartbeat
+
+###
+
+### Status do ESP32
+GET {{baseUrl}}/esp-status

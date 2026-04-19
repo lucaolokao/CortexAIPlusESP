@@ -1,0 +1,26 @@
+version: '3.8'
+
+# ⚠️  DESENVOLVIMENTO LOCAL — Altere as senhas antes de usar em produção!
+# Use variáveis de ambiente ou Docker Secrets para ambientes não locais.
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: cortexai-postgres
+    environment:
+      POSTGRES_DB: cortexai
+      POSTGRES_USER: cortexai
+      POSTGRES_PASSWORD: cortexai123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cortexai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

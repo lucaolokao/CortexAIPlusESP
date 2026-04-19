@@ -1,0 +1,58 @@
+{
+  "name": "cortexai-esp",
+  "version": "6.0.0",
+  "description": "CortexAI POS — Backend com IA Customizada, Prisma ORM e PostgreSQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "concurrently --names \"BACKEND,DASHBOARD\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\" \"node server.js\" \"npm --prefix dashboard run dev -- --port 3001\"",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "npx prisma studio",
+    "db:generate": "npx prisma generate",
+    "setup": "npm install && npm --prefix dashboard install && npx prisma generate && npx prisma migrate deploy && node prisma/seed.js",
+    "dev:backend": "node server.js",
+    "dev:dashboard": "npm --prefix dashboard run dev -- --port 3001",
+    "start:backend": "node server.js",
+    "start:dashboard": "npm --prefix dashboard run start",
+    "build": "npm --prefix dashboard run build"
+  },
+  "keywords": [
+    "pos",
+    "ia",
+    "prisma",
+    "postgresql",
+    "esp32"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@microsoft/recognizers-text-suite": "^1.3.1",
+    "@prisma/client": "^6.19.3",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "fuse.js": "^7.2.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "jest": "^30.3.0",
+    "jest-environment-node": "^30.3.0",
+    "prisma": "^6.19.3",
+    "supertest": "^7.2.2"
+  }
+}

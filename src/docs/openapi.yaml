@@ -1,0 +1,760 @@
+openapi: 3.0.0
+info:
+  title: CortexAI POS API
+  description: |
+    API REST do CortexAI POS — sistema de Ponto de Venda com inteligência artificial.
+    Gerencia produtos, vendas, clientes, cupons, categorias, estoque e processamento de texto com IA.
+  version: 6.0.0
+  contact:
+    name: CortexAI
+servers:
+  - url: http://localhost:3001
+    description: Servidor de desenvolvimento
+
+paths:
+  # ====== AUTH ======
+  /api/auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/LoginCredenciais'
+                - $ref: '#/components/schemas/LoginPin'
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usuario:
+                    type: object
+                    properties:
+                      id: { type: integer }
+                      nome: { type: string }
+                      login: { type: string }
+                      role: { type: string }
+                  token: { type: string }
+        '401':
+          description: Credenciais inválidas
+
+  /api/auth/register:
+    post:
+      summary: Registrar novo usuário
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, login, senha]
+              properties:
+                nome: { type: string }
+                login: { type: string }
+                senha: { type: string }
+                pin: { type: string, maxLength: 4, minLength: 4 }
+                role: { type: string, default: operador }
+      responses:
+        '200':
+          description: Usuário registrado
+        '400':
+          description: Dados inválidos ou login já existe
+
+  /api/auth/me:
+    get:
+      summary: Dados do usuário autenticado
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuário
+
+  # ====== PRODUTOS ======
+  /api/produtos:
+    get:
+      summary: Listar produtos (com paginação)
+      tags: [Produtos]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50 }
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Busca por nome, SKU, código de barras ou categoria
+        - in: query
+          name: categoria
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de produtos com paginação
+
+  /api/produto:
+    post:
+      summary: Criar novo produto
+      tags: [Produtos]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarProduto'
+      responses:
+        '200':
+          description: Produto criado com sucesso
+        '400':
+          description: Dados inválidos
+    put:
+      summary: Atualizar produto
+      tags: [Produtos]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarProduto'
+      responses:
+        '200':
+          description: Produto atualizado
+    delete:
+      summary: Deletar produto
+      tags: [Produtos]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              properties:
+                nome: { type: string }
+      responses:
+        '200':
+          description: Produto deletado
+
+  # ====== CATEGORIAS ======
+  /api/categorias:
+    get:
+      summary: Listar todas categorias
+      tags: [Categorias]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Lista de categorias
+
+  /api/categoria:
+    post:
+      summary: Criar nova categoria
+      tags: [Categorias]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              properties:
+                nome: { type: string }
+                descricao: { type: string }
+                tipoProduto: { type: string }
+                icone: { type: string }
+                cor: { type: string }
+                status: { type: string, default: ativa }
+    put:
+      summary: Atualizar categoria
+      tags: [Categorias]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              properties:
+                nome: { type: string, description: 'Nome atual para identificar a categoria' }
+                novoNome: { type: string }
+                descricao: { type: string }
+                status: { type: string }
+    delete:
+      summary: Deletar categoria
+      tags: [Categorias]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              properties:
+                nome: { type: string }
+      responses:
+        '200':
+          description: Categoria deletada
+
+  # ====== VENDAS ======
+  /api/venda:
+    post:
+      summary: Registrar nova venda
+      tags: [Vendas]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarVenda'
+      responses:
+        '200':
+          description: Venda registrada com sucesso
+        '400':
+          description: Dados inválidos ou estoque insuficiente
+
+  /api/historico:
+    get:
+      summary: Histórico de vendas (paginado)
+      tags: [Vendas]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: dataInicio
+          schema: { type: string, format: date-time }
+        - in: query
+          name: dataFim
+          schema: { type: string, format: date-time }
+        - in: query
+          name: origem
+          schema: { type: string }
+        - in: query
+          name: produto
+          schema: { type: string }
+      responses:
+        '200':
+          description: Histórico de vendas
+
+  /api/vendas:
+    get:
+      summary: Listar últimas vendas
+      tags: [Vendas]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100 }
+      responses:
+        '200':
+          description: Lista de vendas
+
+  /api/stats:
+    get:
+      summary: Estatísticas gerais (total vendas, faturamento, ticket médio)
+      tags: [Vendas]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Estatísticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalVendas: { type: integer }
+                  faturamentoTotal: { type: number }
+                  ticketMedio: { type: number }
+                  produtosUnicos: { type: integer }
+                  valorEstoque: { type: number }
+
+  /api/vendas-7dias:
+    get:
+      summary: Vendas dos últimos 7 dias
+      tags: [Vendas]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Vendas por dia
+
+  # ====== CLIENTES ======
+  /api/clientes:
+    get:
+      summary: Listar clientes (com paginação)
+      tags: [Clientes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Busca por nome, CPF, email ou telefone
+        - in: query
+          name: pagina
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limite
+          schema: { type: integer, default: 50 }
+        - in: query
+          name: ativo
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de clientes
+
+  /api/cliente:
+    post:
+      summary: Criar novo cliente
+      tags: [Clientes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarCliente'
+      responses:
+        '200':
+          description: Cliente criado
+    put:
+      summary: Atualizar cliente
+      tags: [Clientes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarCliente'
+      responses:
+        '200':
+          description: Cliente atualizado
+    delete:
+      summary: Deletar cliente
+      tags: [Clientes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: integer }
+      responses:
+        '200':
+          description: Cliente deletado
+
+  # ====== CUPONS ======
+  /api/cupons:
+    get:
+      summary: Listar todos cupons
+      tags: [Cupons]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Lista de cupons
+
+  /api/cupom:
+    post:
+      summary: Criar novo cupom
+      tags: [Cupons]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, tipo, valor, validoAte]
+              properties:
+                codigo: { type: string, example: DESCONTO10 }
+                tipo: { type: string, example: percentual }
+                valor: { type: number, example: 10 }
+                valorMinimo: { type: number }
+                validoAte: { type: string, format: date-time }
+                usosMax: { type: integer, default: 1 }
+      responses:
+        '200':
+          description: Cupom criado
+    put:
+      summary: Atualizar cupom
+      tags: [Cupons]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: integer }
+                codigo: { type: string }
+                tipo: { type: string }
+                valor: { type: number }
+                validoAte: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Cupom atualizado
+    delete:
+      summary: Deletar cupom
+      tags: [Cupons]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo]
+              properties:
+                codigo: { type: string }
+      responses:
+        '200':
+          description: Cupom deletado
+
+  /api/cupons/{codigo}/validar:
+    post:
+      summary: Validar cupom
+      tags: [Cupons]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: codigo
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Cupom válido
+        '400':
+          description: Cupom inválido, expirado ou sem usos
+
+  # ====== NOTIFICAÇÕES ======
+  /api/notificacoes:
+    get:
+      summary: Listar notificações
+      tags: [Notificações]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: tipo
+          schema: { type: string }
+        - in: query
+          name: lida
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Notificações paginadas
+
+  /api/notificacoes/lidas:
+    put:
+      summary: Marcar todas notificações como lidas
+      tags: [Notificações]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Todas marcadas como lidas
+
+  /api/notificacao/{id}/lida:
+    put:
+      summary: Marcar notificação como lida
+      tags: [Notificações]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Notificação marcada como lida
+
+  /api/notificacoes/nao-lidas/count:
+    get:
+      summary: Contar notificações não lidas
+      tags: [Notificações]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Contagem de não lidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+
+  # ====== RELATÓRIOS ======
+  /api/relatorios/faturamento:
+    get:
+      summary: Relatório de faturamento por período
+      tags: [Relatórios]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: periodo
+          schema: { type: string, enum: [semana, mes, ano], default: '30 dias' }
+        - in: query
+          name: inicio
+          schema: { type: string, format: date }
+        - in: query
+          name: fim
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Dados de faturamento
+
+  /api/relatorios/top-produtos:
+    get:
+      summary: Top produtos mais vendidos
+      tags: [Relatórios]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Ranking de produtos
+
+  /api/relatorios/vendas-por-dia:
+    get:
+      summary: Vendas agrupadas por dia (range customizado)
+      tags: [Relatórios]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: inicio
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: fim
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Vendas por dia
+
+  /api/relatorios/estoque-baixo:
+    get:
+      summary: Produtos com estoque abaixo do mínimo
+      tags: [Estoque]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Produtos com estoque baixo
+
+  /api/relatorios/estoque-resumo:
+    get:
+      summary: Resumo geral de estoque
+      tags: [Estoque]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Resumo de estoque
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalItens: { type: integer }
+                  valorTotalCusto: { type: number }
+                  produtosCadastrados: { type: integer }
+                  semEstoque: { type: integer }
+
+  # ====== IA ======
+  /api/processar-texto:
+    post:
+      summary: Processar texto com IA (fuzzy match com produtos)
+      tags: [IA]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texto]
+              properties:
+                texto:
+                  type: string
+                  example: "2 Coca Cola, 1 agua mineral"
+      responses:
+        '200':
+          description: Resultado do processamento com IA
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sucesso: { type: boolean }
+                  audioLogId: { type: integer }
+                  texto: { type: string }
+                  itens:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        textoOriginal: { type: string }
+                        produto: { type: object, nullable: true }
+                        quantidade: { type: integer }
+                        confianca: { type: integer }
+                        encontrado: { type: boolean }
+                  resumo:
+                    type: object
+                    properties:
+                      totalItens: { type: integer }
+                      encontrados: { type: integer }
+                      confiancaMedia: { type: integer }
+                      totalEstimado: { type: number }
+
+  /api/audio-logs:
+    get:
+      summary: Listar logs de processamento de IA
+      tags: [IA]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Logs de áudio
+
+  # ====== ESP32 ======
+  /api/heartbeat:
+    post:
+      summary: Heartbeat do dispositivo ESP32
+      tags: [ESP32]
+      responses:
+        '200':
+          description: Heartbeat recebido
+
+  /api/esp-status:
+    get:
+      summary: Status de conexão do ESP32
+      tags: [ESP32]
+      responses:
+        '200':
+          description: Status do ESP32
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  online: { type: boolean }
+                  ultimoHeartbeat: { type: integer }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginCredenciais:
+      type: object
+      required: [login, senha]
+      properties:
+        login: { type: string }
+        senha: { type: string }
+    LoginPin:
+      type: object
+      required: [pin]
+      properties:
+        pin: { type: string, maxLength: 4 }
+
+    CriarProduto:
+      type: object
+      required: [nome, preco]
+      properties:
+        nome: { type: string }
+        estoque: { type: integer, default: 0 }
+        preco: { type: number }
+        categoria: { type: string }
+        sku: { type: string }
+        codigoBarras: { type: string }
+        precoCusto: { type: number }
+        estoqueMinimo: { type: integer }
+        fornecedor: { type: string }
+        validade: { type: string, format: date-time }
+        lote: { type: string }
+        localizacao: { type: string }
+        status: { type: string, default: ativo }
+        descricao: { type: string }
+        tags: { type: string }
+
+    AtualizarProduto:
+      type: object
+      required: [nome]
+      properties:
+        nome: { type: string }
+        estoque: { type: integer }
+        preco: { type: number }
+        categoria: { type: string }
+        sku: { type: string }
+        status: { type: string }
+
+    CriarVenda:
+      type: object
+      required: [produto, quantidade, preco]
+      properties:
+        produto: { type: string }
+        quantidade: { type: integer, minimum: 1 }
+        preco: { type: number, minimum: 0.01 }
+        origem: { type: string, default: manual }
+        audioLogId: { type: integer }
+        usuarioId: { type: integer }
+        clienteId: { type: integer }
+        desconto: { type: number, default: 0 }
+        metodoPagamento: { type: string }
+        troco: { type: number }
+        cupomUsado: { type: string }
+
+    CriarCliente:
+      type: object
+      required: [nome]
+      properties:
+        nome: { type: string }
+        cpf: { type: string }
+        email: { type: string, format: email }
+        telefone: { type: string }
+        endereco: { type: string }
+        obs: { type: string }
+
+    AtualizarCliente:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
+        nome: { type: string }
+        cpf: { type: string }
+        email: { type: string }
+        telefone: { type: string }
+        ativo: { type: boolean }
