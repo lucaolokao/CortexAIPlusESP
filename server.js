@@ -129,7 +129,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'CortexAI POS — API Docs',
 }));
 
-// Heartbeat route (after swagger to not conflict)
+// Health check — Railway usa GET para verificar se o serviço está vivo
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+// Heartbeat route (ESP32 → POST para registrar presença)
 let ultimoHeartbeat = null;
 
 app.post('/api/heartbeat', (req, res) => {
