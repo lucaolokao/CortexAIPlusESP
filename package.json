@@ -18,7 +18,7 @@
     "start:backend": "node server.js",
     "start:dashboard": "npm --prefix dashboard run start",
     "build": "npx prisma generate",
-    "build:dashboard": "npm --prefix dashboard run build",
+    "build:dashboard": "npm --prefix dashboard run build"
   },
   "keywords": [
     "pos",
